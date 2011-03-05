@@ -4,7 +4,7 @@ LD        := gcc
 SRC_DIR   := .
 BUILD_DIR := build
 
-DATAFILES := $(foreach sdir,data,$(wildcard $(sdir)/*.png)) $(wildcard data/*.html)
+DATAFILES := $(foreach sdir,data,$(wildcard $(sdir)/*.png)) $(wildcard data/*.html) $(wildcard data/*.js)
 DATAFILES := $(patsubst data/%,%,$(DATAFILES))
 SRC       := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
 OBJ       := $(patsubst src/%.c,build/%.o,$(SRC))

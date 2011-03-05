@@ -191,6 +191,14 @@ void process_connection(int conn)
 	{
 		if ( (fp = fopen(filename+1, "rb")) == NULL ) {
 			fprintf(stderr, "Unable to open '%s' for reading.\n\n", filename);
+
+			if(!strcmp(filename, "/todo.json"))
+			{
+				WriteLine(conn, "\n", 1);
+
+				shutdown(conn, SD_SEND);
+			}
+
 			closesocket(conn);
 			return;
 		}
