@@ -1,0 +1,56 @@
+---------------------------------------
+Simple Project TODO
+---------------------------------------
+
+Simple Project TODO is a single-file program (EXE on Windows) that allows easy, 
+and nice looking TODO for any project.
+
+The TODO list is stored in the project's folder as JSON, so it's easy to dig in
+should the user decide to stop using Simple Project TODO. This also allows for
+easy integration into Version Control.
+
+
+Simple Project TODO consists of really two parts. A "servlet", a mini-web server,
+and some HTML5 code. When you run SimpleProjectTODO from your project's directory
+it launches your default web browser, greeting you with the TODO.
+
+You can enter your project's name, and then begin adding new Tasks.
+
+Once you complete a task, just click the Checkmark.
+
+Tasks are color coded, so it's easy to identify what needs to be done and everything
+that has been completed.
+
+
+Simple Project TODO is a step up from using a text file, but it does not go
+overboard. Packing the whole thing into a single, portable EXE allows easy
+usage and integration into many platforms and environments.
+
+
+FUTURE PLANS: Obviously this is currently a Work In Progress as-is. It is mainly
+GUI focussed, so it can't be used from the command-line. It might be nice to
+have a simple CLI, just to make this program even more portable.
+
+
+
+
+Usage:
+	Copy SimpleProjectTODO.exe to your project's folder. You can also install
+	it to a system path (although I find it easier to just copy to each project).
+
+	Run SimpleProjectTODO.exe. Your web browser should open, displaying 
+	the Simple Project TODO panel.
+
+	Click "Project" to add a project name.
+
+	Click the empty blue rectangle to add a new task. Type in the task's description
+	and click the Plus on the left.
+
+	When you've completed a task, click the Checkmark.
+
+	You can edit a task's text by just clicking on the text.
+
+	There is no need to save. Changes are saved automatically to "todo.json" in the
+	project directory.
+
+
