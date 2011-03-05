@@ -3,6 +3,10 @@
 #include <windows.h>
 #include <winsock.h>
 
+#ifndef MIN
+	#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#endif
+
 const int SERVER_PORT = 8492;
 
 
@@ -73,52 +77,107 @@ void WriteLine(int conn, const char *line, size_t len)
 	}
 }
 
+void ReadLine(int conn, char *buf, ssize_t max)
+{
+	char c;
+	int rc = 0;
+	max--;	// Leave room for a NULL terminator
+
+	while(max > 0) {
+		if ( (rc = recv(conn, buf, 1, 0)) == 1 ) {
+			printf("%c", *buf);
+			if ( *buf == '\n' ) {
+				*(buf+1) = 0;
+				return;
+			}
+
+			buf++;
+			max--;
+		}
+		else if ( rc == 0 )
+		{
+			*buf = 0;
+			return;
+		}
+		else {
+			fprintf(stderr, "Error reading request: %i.\n", rc);
+			*buf = 0;
+			return;
+		}
+	}
+}
+
+bool ReadData(int conn, char *buf, ssize_t max)
+{
+	int rc = 0;
+
+	while(max > 0) {
+		if ( (rc = recv(conn, buf, max, 0)) > 0 ) {
+			buf += rc;
+			max -= rc;
+		}
+		else if ( rc == 0 )
+		{
+			return false;
+		}
+		else {
+			fprintf(stderr, "Error reading request: %i.\n", rc);
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void process_connection(int conn)
 {
 	ssize_t rc, len;
 	bool line_ended = false;
-	char c;
 	FILE *fp;
 	char buf[1024];
-	size_t requestheader_len = 0;
-	char filename[256], requestheader[1024];
+	char filename[256] = {0};
+	bool GET = true;
+	int content_length = 0;
+
+	strcpy(filename, "/index.html");
 
 
 	// Wait until the request has finished sending
 	while(1) {
-		if ( (rc = recv(conn, &c, 1, 0)) == 1 ) {
-			printf("%c", c);
-			if ( c == '\n' ) {
-				if ( line_ended )
-					break;
-				line_ended = true;
-			}
-			else if ( c != '\n' && c != '\r' )
-				line_ended = false;
-
-			if(requestheader_len < 1023) {
-				requestheader[requestheader_len] = c;
-				requestheader_len++;
-			}
-		}
-		else if ( rc == 0 )
+		ReadLine(conn, buf, 1024);
+		if(buf[0] == '\r' && buf[1] == '\n')
 			break;
-		else {
-			fprintf(stderr, "Error reading request: %i.\n", rc);
-			rc = WSAGetLastError();
-			fprintf(stderr, "Error reading request: %i.\n", rc);
-			return;
-		}
+
+		// TODO: These functions are unsafe.
+		if(sscanf(buf, "GET %s HTTP", filename) == 1)
+			GET = true;
+
+		if(sscanf(buf, "POST %s HTTP", filename) == 1)
+			GET = false;
+
+		sscanf(buf, "Content-Length: %i\r\n", &content_length);
 	}
 
-	if(requestheader_len > 0) {
-		requestheader[requestheader_len-1] = 0;
-		if(sscanf(requestheader, "GET %s HTTP", filename) != 1)
-			strcpy(filename, "/index.html");
-		if(filename[1] == 0)
-			strcpy(filename, "/index.html");
+	if(!strcmp(filename, "/save") && !GET)
+	{
+		fp = fopen("todo.json", "wb");
+
+		while(content_length > 0) {
+			if(!ReadData(conn, buf, MIN(content_length, 1024)))
+				break;
+
+			fwrite(buf, 1, MIN(content_length, 1024), fp);
+
+			content_length -= 1024;
+		}
+
+		shutdown(conn, SD_SEND);
+		closesocket(conn);
+		fclose(fp);
+		return;
 	}
-	else
+
+	if(filename[1] == 0)
 		strcpy(filename, "/index.html");
 
 	printf("Sending: '%s'\n", filename+1);

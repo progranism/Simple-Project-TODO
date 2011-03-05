@@ -1,11 +1,1 @@
-{
-	"project_name": "Simple Project TODO",
-	"items": [
-		{
-			"text": "Complete Allegro 6"
-		},
-		{
-			"text": "Win everything forever"
-		}
-	]
-}
+{"project_name":"Simple Project TODO","items":[{"text":"Fun with tasks!","status":"incomplete"},{"text":"Another task that has to be completed REALLY soon. PLEASE!","status":"complete"},{"text":"New Task","status":"incomplete"},{"text":"Complete Allegro 6 -- WOO -- WOOWOOO -- UBER WOW","status":"complete"},{"text":"Win everything forever","status":"complete"}]}
