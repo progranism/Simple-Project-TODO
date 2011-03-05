@@ -17,10 +17,13 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs SimpleProjectTODO.exe
+all: checkdirs SimpleProjectTODO.exe FileToDatapack.exe
 
-SimpleProjectTODO.exe: $(OBJ)
+SimpleProjectTODO.exe: build/main.o
 	$(LD) $^ -o $@ -lwsock32
+
+FileToDatapack.exe: build/file_to_datapack.o
+	$(LD) $^ -o $@
 
 
 checkdirs: $(BUILD_DIR)

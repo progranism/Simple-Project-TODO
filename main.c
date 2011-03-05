@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include <windows.h>
 #include <winsock.h>
+#include "packer.h"
+#include "datapack.h"
 
 #ifndef MIN
 	#define MIN(x, y) ((x) < (y) ? (x) : (y))
@@ -17,14 +19,12 @@ int main(int argc, char *argv[])
 {
 	int listener, conn;
 	struct sockaddr_in servaddr;
-	ssize_t rc;
 	WSADATA wsaData;
 
 	WSAStartup(MAKEWORD(1, 1), &wsaData);
 
 	if ( (listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ) {
-		rc = WSAGetLastError();
-		fprintf(stderr, "Could not create listening socket: %i", rc);
+		fprintf(stderr, "Could not create listening socket: %i", WSAGetLastError());
 		return -1;
 	}
 
@@ -79,7 +79,6 @@ void WriteLine(int conn, const char *line, size_t len)
 
 void ReadLine(int conn, char *buf, ssize_t max)
 {
-	char c;
 	int rc = 0;
 	max--;	// Leave room for a NULL terminator
 
@@ -131,13 +130,13 @@ bool ReadData(int conn, char *buf, ssize_t max)
 
 void process_connection(int conn)
 {
-	ssize_t rc, len;
-	bool line_ended = false;
+	ssize_t len;
 	FILE *fp;
 	char buf[1024];
 	char filename[256] = {0};
 	bool GET = true;
 	int content_length = 0;
+	struct DATAPACK datapack;
 
 	strcpy(filename, "/index.html");
 
@@ -182,22 +181,31 @@ void process_connection(int conn)
 
 	printf("Sending: '%s'\n", filename+1);
 
-	if ( (fp = fopen(filename+1, "rb")) == NULL ) {
-		fprintf(stderr, "Unable to open '%s' for reading.\n\n", filename);
-		closesocket(conn);
-		return;
+	datapack = find_datapack(datapacks, filename+1);
+
+	if(datapack.name != NULL)
+	{
+		WriteLine(conn, datapack.data, datapack.len);
 	}
+	else
+	{
+		if ( (fp = fopen(filename+1, "rb")) == NULL ) {
+			fprintf(stderr, "Unable to open '%s' for reading.\n\n", filename);
+			closesocket(conn);
+			return;
+		}
 
 
-	// Send the file
-	WriteLine(conn, "HTTP/1.0 200 OK\r\nServer: PGBWebServ v01.\r\nContent-Type: text/html\r\n\r\n", 0);
-	while(1) {
-		len = fread(buf, 1, 1024, fp);
-		printf("Sending %i bytes.\n", len);
-		WriteLine(conn, buf, len);
+		// Send the file
+		WriteLine(conn, "HTTP/1.0 200 OK\r\nServer: PGBWebServ v01.\r\nContent-Type: text/html\r\n\r\n", 0);
+		while(1) {
+			len = fread(buf, 1, 1024, fp);
+			printf("Sending %u bytes.\n", (unsigned int)len);
+			WriteLine(conn, buf, len);
 
-		if(len < 1024)
-			break;
+			if(len < 1024)
+				break;
+		}
 	}
 
 	shutdown(conn, SD_SEND);
